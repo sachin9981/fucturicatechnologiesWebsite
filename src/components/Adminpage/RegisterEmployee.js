@@ -43,7 +43,6 @@ const RegisterEmployee = () => {
           },
         }
       );
-      console.log("Employee created successfully:", response.data);
       setSuccess("Employee created successfully!");
       setName("");
       setEmail("");

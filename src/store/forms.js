@@ -4,7 +4,6 @@ const initialState = {
     count: localStorage.getItem('count') || null,
     sessionCount: localStorage.getItem('totalCount') || null
 }
-// console.log('Initial totalCount:', initialState.sessionCount);
 const formSlice = createSlice({
     name: 'form',
     initialState,

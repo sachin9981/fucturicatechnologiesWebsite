@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { login } from "../../store/auth";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -128,6 +129,164 @@ const Login = () => {
     navigate("/forgotPassword");
   };
 
+  const handleGoogleLoginSuccess = async (response) => {
+    const token = response.credential;
+    try {
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/login`,
+        { token },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await res.data;
+
+      // Handle successful login, e.g., save token to local storage, redirect, etc.
+      dispatch(login(data));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("name", data.user.name);
+      localStorage.setItem("role", data.user.role);
+      localStorage.setItem("email", data.user.email);
+      // Handle navigation based on user role
+      if (data.user.role === "admin") {
+        navigate("/admin-panel");
+        // navigate('/admin-verify-otp');
+      } else if (data.user.selfDeclaration === true) {
+        navigate("/employee-panel");
+      } else {
+        navigate("/self-declaration");
+      }
+      setSuccessMessage("Login successful");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      if (error.response) {
+        // Handle known API errors
+        const errorMessage = error.response.data.message || "An error occurred";
+
+        if (errorMessage === "Otp required for login. Please contact admin.") {
+          // Set the error message
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              "Yesterday your working was not complete for 6 hours. Please verify your account.",
+          }));
+
+          // Stop the loader
+          setIsSubmitting(false);
+
+          // Delay for 3 seconds before redirecting to the OTP verification page
+          setTimeout(() => {
+            navigate("/admin-verify-otp", { state: { email: email } });
+          }, 3000);
+          return;
+        }
+
+        if (errorMessage.toLowerCase().includes("password")) {
+          setErrors((prev) => ({ ...prev, password: "Incorrect password" }));
+        } else if (errorMessage.toLowerCase().includes("email")) {
+          setErrors((prev) => ({ ...prev, email: "Email not found" }));
+        } else {
+          setErrors((prev) => ({ ...prev, general: errorMessage }));
+        }
+      } else {
+        // Handle unexpected errors
+        setErrors((prev) => ({
+          ...prev,
+          general: "An unexpected error occurred",
+        }));
+      }
+    } finally {
+      setIsSubmitting(false); // Stop loader
+    }
+  };
+
+  const handleForgotPassword = () => {
+    navigate("/forgotPassword");
+  };
+
+  const handleGoogleLoginSuccess = async (response) => {
+    const token = response.credential;
+    try {
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/login`,
+        { token },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await res.data;
+
+      // Handle successful login, e.g., save token to local storage, redirect, etc.
+      dispatch(login(data));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("name", data.user.name);
+      localStorage.setItem("role", data.user.role);
+      localStorage.setItem("email", data.user.email);
+      // Handle navigation based on user role
+      if (data.user.role === "admin") {
+        navigate("/admin-panel");
+        // navigate('/admin-verify-otp');
+      } else if (data.user.selfDeclaration === true) {
+        navigate("/employee-panel");
+      } else {
+        navigate("/self-declaration");
+      }
+      setSuccessMessage("Login successful");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      if (error.response) {
+        // Handle known API errors
+        const errorMessage = error.response.data.message || "An error occurred";
+
+        if (errorMessage === "Otp required for login. Please contact admin.") {
+          // Set the error message
+          setErrors((prev) => ({
+            ...prev,
+            general:
+              "Yesterday your working was not complete for 6 hours. Please verify your account.",
+          }));
+
+          // Stop the loader
+          setIsSubmitting(false);
+
+          // Delay for 3 seconds before redirecting to the OTP verification page
+          setTimeout(() => {
+            navigate("/admin-verify-otp", { state: { email: email } });
+          }, 3000);
+          return;
+        }
+
+        if (errorMessage.toLowerCase().includes("password")) {
+          setErrors((prev) => ({ ...prev, password: "Incorrect password" }));
+        } else if (errorMessage.toLowerCase().includes("email")) {
+          setErrors((prev) => ({ ...prev, email: "Email not found" }));
+        } else {
+          setErrors((prev) => ({ ...prev, general: errorMessage }));
+        }
+      } else {
+        // Handle unexpected errors
+        setErrors((prev) => ({
+          ...prev,
+          general: "An unexpected error occurred",
+        }));
+      }
+    } finally {
+      setIsSubmitting(false); // Stop loader
+    }
+  };
+
+  const handleGoogleLoginFailure = (error) => {
+    console.error("Google Login failed", error);
+  };
+
   return (
     <>
       <div className="w-full flex flex-col md:flex-row sm:flex-row min-h-screen font-montserrat mb-20 sm:mb-5">
@@ -213,12 +372,11 @@ const Login = () => {
               <span className="px-3 text-gray">OR</span>
               <hr className="w-full border-t border-gray" />
             </div>
-            <button
-              type="submit"
-              className="bg-transparent border-2 rounded-lg p-2 w-[60%] google-signin google-icon"
-            >
-              Sign in with Google
-            </button>
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginFailure}
+              useOneTap
+            />
           </form>
         </div>
       </div>

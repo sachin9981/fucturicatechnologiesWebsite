@@ -458,7 +458,6 @@ const Employee = () => {
 
     if (!allFieldsFilled) {
       console.error("Error: All fields are required.");
-      console.log("formData:", formData);
       setIsSubmitting(false);
       return;
     }
